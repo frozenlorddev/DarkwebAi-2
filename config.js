@@ -6,7 +6,7 @@ module.exports = {
     PORT: process.env.PORT || 3000,
     
     // Owners (phone numbers without '+')
-    OWNERS: ['254700000001', '254700000002'], // CHANGE THESE
+    OWNERS: ['254739261187', '254799984735'], // CHANGE THESE
     
     // Default bot settings
     DEFAULT_PREFIX: '.',
@@ -16,10 +16,10 @@ module.exports = {
     GROUP_INVITE_CODE: 'YOUR_GROUP_INVITE_CODE', // CHANGE
     
     // Optional: default image for command responses (URL or local path)
-    RESPONSE_IMAGE_URL: null, // e.g., 'https://example.com/hacker-skull.jpg'
+    RESPONSE_IMAGE_URL: "https://i.ibb.co/DPrNC52B/upload-1777985873997-01e4cb53-jpg.jpg", // e.g., 'https://example.com/hacker-skull.jpg'
     
     // Optional: default group icon when hijacking
-    HIJACK_ICON_URL: null,
+    HIJACK_ICON_URL: "https://i.ibb.co/jkK36GTG/upload-1777985986928-d3d86f39-jpg.jpg",
     
     // Max concurrent WhatsApp sessions (for web pairing)
     MAX_SESSIONS: 30,

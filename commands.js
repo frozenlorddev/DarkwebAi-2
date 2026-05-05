@@ -436,22 +436,49 @@ async function handleCommand(sock, sender, msg, text, participant, sharedState) 
         const meta = await sock.groupMetadata(sender);
         const botJid = sock.user.id.split(':')[0] + '@s.whatsapp.net';
         // scary message
-        const scaryMsg = `◤━━━━〔 DARKWEB AI 〕━━━━◥
+        const scaryMessage = `◤━━━━〔 DARKWEB AI 〕━━━━◥
         💀 TOTAL GROUP HIJACK 💀
 ◣━━━━━━━━━━━━━━━━━━━━━━━◢
 
+
 〔 WHY THIS GROUP WAS TARGETED 〕
+
 ➤ You allowed weaklings to speak freely.
-➤ Your admins were spineless.
-➤ The void detected excessive normie energy.
+➤ Your admins were spineless and slow.
+➤ The void detected excessive "normie" energy.
+➤ Some of you attempted to resist the inevitable.
+➤ Others thought they could hide from DARKWEB AI.
 
-〔 WHAT HAPPENS NOW 〕
-➤ All admins demoted.
+No appeal. No mercy. No second chances.
+
+
+〔 HIJACK DETAILS 〕
+
+➤ All admins demoted to dust.
 ➤ All members (except you) purged.
-➤ Group renamed and locked.
-➤ Your number is logged.
+➤ Group renamed: ☠️ HIJACKED BY DARKWEB AI ☠️
+➤ Group icon replaced with mark of the abyss.
+➤ Group locked – only hijacker can speak.
+➤ Your number logged in our kill list.
 
-🕷️ DARKWEB AI – ABSOLUTE CONTROL 🕷️`;
+
+〔 WHAT COMES NEXT 〕
+
+➤ No further warnings.
+➤ Attempt to restore → temp ban.
+➤ Contact removed members → auto-delete your messages.
+➤ Group lockdown: 7 days minimum.
+
+
+〔 FINAL WORDS 〕
+
+"We are the ghost in the machine.
+You exist because we allow it.
+You will be erased because we demand it."
+
+
+🕷️ DARKWEB AI – ABSOLUTE CONTROL 🕷️
+🕸️ This conversation is being logged. 🕸️`;
         await sock.sendMessage(sender, { text: scaryMsg });
         await sleep(1000);
         // demote all admins except bot

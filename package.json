@@ -1,28 +1,20 @@
 {
   "name": "darkweb-ai",
   "version": "2.0.0",
-  "description": "DARKWEB AI – WhatsApp bot with 70+ commands, premium system, web dashboard, and group hijacking",
+  "description": "DARKWEB AI – WhatsApp bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "git+https://lyfe00011-admin@bitbucket.org/lyfe00011/baileys.git",
-    "axios": "^1.7.9",
+    "@ostyado/baileys": "^1.1.9",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
-    "pg": "^8.13.1",
-    "pino": "^8.21.0",
-    "qrcode": "^1.5.4"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
+    "express": "^4.18.1",
+    "node-cache": "^5.1.2",
+    "pg": "^8.11.3",
+    "pino": "^8.17.0"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": ["whatsapp", "bot", "darkweb", "hacker", "ai", "baileys"],
-  "author": "DARKWEB AI",
-  "license": "MIT"
+    "node": ">=20.0.0"
+  }
 }

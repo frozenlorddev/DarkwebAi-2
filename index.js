@@ -264,40 +264,49 @@ async function startWhatsAppSessionAndGetCode(sessionId, phoneNumber) {
                 browser: ['DARKWEB AI', 'Chrome', '116.0.0.0']
             });
             let resolved = false;
+
             sock.ev.on('creds.update', saveCreds);
+
+            // Wait for connection to be fully open before requesting code
+            const connectionTimeout = setTimeout(() => {
+                if (!resolved) reject(new Error('Connection timeout'));
+            }, 30000);
+
             sock.ev.on('connection.update', async (update) => {
                 const { connection, lastDisconnect } = update;
                 if (connection === 'open' && !resolved) {
-                    // already connected without pairing? shouldn't happen for new number
+                    clearTimeout(connectionTimeout);
+                    // Small extra delay after open
+                    setTimeout(async () => {
+                        try {
+                            if (!sock.authState.creds.registered) {
+                                const code = await sock.requestPairingCode(phoneNumber);
+                                if (!resolved) {
+                                    resolved = true;
+                                    activeSessions.set(sessionId, { sock, phoneNumber, connectedAt: Date.now() });
+                                    resolve(code);
+                                }
+                            } else {
+                                if (!resolved) reject(new Error('Already registered'));
+                            }
+                        } catch (err) {
+                            if (!resolved) reject(err);
+                        }
+                    }, 3000); // extra 3 seconds after open
                 }
                 if (connection === 'close') {
                     const shouldReconnect = (lastDisconnect?.error instanceof Boom)?.output?.statusCode !== 401;
-                    if (!shouldReconnect && !resolved) reject(new Error('Connection closed'));
+                    if (!shouldReconnect && !resolved) {
+                        clearTimeout(connectionTimeout);
+                        reject(new Error('Connection closed permanently'));
+                    }
                 }
             });
-            // Request pairing code after socket is ready
-            setTimeout(async () => {
-                try {
-                    if (!sock.authState.creds.registered) {
-                        const code = await sock.requestPairingCode(phoneNumber);
-                        if (!resolved) {
-                            resolved = true;
-                            activeSessions.set(sessionId, { sock, phoneNumber, connectedAt: Date.now() });
-                            resolve(code);
-                        }
-                    } else {
-                        if (!resolved) reject(new Error('Already registered'));
-                    }
-                } catch (err) {
-                    if (!resolved) reject(err);
-                }
-            }, 3000);
         } catch (err) {
             reject(err);
         }
     });
 }
-
 // ========== START SERVER ==========
 global.startTime = Date.now();
 const server = http.createServer(app);

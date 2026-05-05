@@ -1,4 +1,4 @@
-// index.js – main entry for DARKWEB AI
+// index.js – main entry for DARKWEB AI (no public folder)
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -59,7 +59,6 @@ let settings = {
     settings.antitagall = await getSetting('antitagall', 'off');
     settings.reactall = await getSetting('reactall', false);
     settings.antebug = await getSetting('antebug', false);
-    // tempbans not loaded here; they are checked per request via database
 })();
 
 // Helper to save settings to database
@@ -74,11 +73,11 @@ async function saveSettingsToDb() {
     await setSetting('antebug', settings.antebug);
 }
 
-// ========== EXPRESS SETUP ==========
+// ========== EXPRESS SETUP (no public folder) ==========
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// No static file serving for public folder
 
 // API routes
 app.get('/api/status', (req, res) => {
@@ -134,17 +133,17 @@ app.post('/api/delsession', async (req, res) => {
             activeSessions.delete(id);
             const authPath = path.join(__dirname, `auth_${id}`);
             if (fs.existsSync(authPath)) fs.rmSync(authPath, { recursive: true, force: true });
-            // Also remove paired record if exists
             if (pairedUsers.has(phone)) pairedUsers.delete(phone);
-            await setPairedUser(phone, null); // clear in db
+            await setPairedUser(phone, null);
             return res.json({ ok: true });
         }
     }
     res.json({ ok: false, error: 'Session not found' });
 });
 
+// Root endpoint – simple text (no public folder)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.send('DARKWEB AI is running. Use WhatsApp commands.');
 });
 
 // ========== WHATSAPP SESSION MANAGER ==========
@@ -212,7 +211,7 @@ const server = http.createServer(app);
 server.listen(config.PORT, () => {
     console.log(`\n◤━━━━〔 DARKWEB AI 〕━━━━◥`);
     console.log(`      ⚠️  SYSTEM ONLINE  ⚠️`);
-    console.log(`🌐 Web dashboard: http://localhost:${config.PORT}`);
+    console.log(`🌐 Web server: http://localhost:${config.PORT}`);
     console.log(`🤖 WhatsApp bot ready for pairing`);
     console.log(`◣━━━━━━━━━━━━━━━━━━━━━━◢\n`);
 });

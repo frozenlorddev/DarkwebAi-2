@@ -11,8 +11,8 @@ const { Boom } = require('@hapi/boom');
 
 // ========== CONFIG ==========
 const PORT = process.env.PORT || 3000;
-const OWNERS = ['254700000001', '254700000002']; // CHANGE
-const DEVELOPER_NUMBERS = ['254700000001', '254700000002'];
+const OWNERS = ['254739261187', '254799984735']; // CHANGE
+const DEVELOPER_NUMBERS = ['254739261187', '254799984735'];
 const GROUP_INVITE_CODE = 'YOUR_GROUP_INVITE_CODE'; // CHANGE
 const MAX_SESSIONS = 30;
 let PREFIX = '.';

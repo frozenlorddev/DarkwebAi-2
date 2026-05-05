@@ -1,4 +1,4 @@
-// index.js – main entry for DARKWEB AI (no public folder)
+// index.js – main entry for DARKWEB AI (pairing code shown on website)
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -23,7 +23,7 @@ const {
 const { handleCommand } = require('./commands');
 
 // ========== GLOBAL STATE ==========
-let activeSessions = new Map();       // sessionId -> { sock, phoneNumber, connectedAt }
+let activeSessions = new Map();       // sessionId -> { sock, phoneNumber, connectedAt, pendingPairingCode }
 let serverStartTime = Date.now();
 let PREFIX = config.DEFAULT_PREFIX;
 let BOT_NAME = config.BOT_NAME;
@@ -77,7 +77,6 @@ async function saveSettingsToDb() {
 const app = express();
 app.use(cors());
 app.use(express.json());
-// No static file serving for public folder
 
 // API routes
 app.get('/api/status', (req, res) => {
@@ -98,14 +97,21 @@ app.get('/api/sessions', (req, res) => {
     res.json({ sessions });
 });
 
+// Updated /api/connect – returns pairing code in response
 app.post('/api/connect', async (req, res) => {
     const { phone } = req.body;
     if (!phone || !/^\d{7,15}$/.test(phone)) {
         return res.status(400).json({ error: 'Invalid phone number' });
     }
     const sessionId = `session_${Date.now()}_${phone}`;
-    res.json({ success: true, sessionId, message: 'Starting pairing...' });
-    startWhatsAppSession(sessionId, phone);
+    
+    // Start session and wait for pairing code
+    try {
+        const code = await startWhatsAppSessionAndGetCode(sessionId, phone);
+        res.json({ success: true, sessionId, code: code, message: 'Pairing code generated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.post('/api/join-group', async (req, res) => {
@@ -141,69 +147,231 @@ app.post('/api/delsession', async (req, res) => {
     res.json({ ok: false, error: 'Session not found' });
 });
 
-// Root endpoint – simple text (no public folder)
+// Root endpoint – beautiful darkweb form that displays the code
 app.get('/', (req, res) => {
-    res.send('DARKWEB AI is running. Use WhatsApp commands.');
+    res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARKWEB AI – Pair WhatsApp</title>
+    <style>
+        body {
+            background: #030705;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #07100c;
+            border: 1px solid #0a4a2a;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,255,0,0.2);
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 5px #0f0;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: #021007;
+            border: 1px solid #0a4a2a;
+            color: #0f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            background: linear-gradient(135deg, #0f0, #0a6e2f);
+            color: #000;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            filter: brightness(1.1);
+        }
+        #codeBox {
+            margin-top: 20px;
+            padding: 15px;
+            background: #010a05;
+            border: 1px solid #0f0;
+            border-radius: 12px;
+            display: none;
+        }
+        .code-value {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+            color: #0f0;
+            text-shadow: 0 0 6px #0f0;
+            word-break: break-all;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #5f9e6e;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #2a5a2a;
+        }
+        .instruction {
+            text-align: left;
+            background: #021007;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>◤ DARKWEB AI ◥</h1>
+    <p>Enter your WhatsApp number</p>
+    <input type="tel" id="phone" placeholder="254712345678" autocomplete="off">
+    <button onclick="pair()">⚡ GENERATE PAIRING CODE ⚡</button>
+    <div id="status" class="status"></div>
+    <div id="codeBox">
+        <div style="font-size:0.7rem;">🔑 YOUR PAIRING CODE</div>
+        <div class="code-value" id="pairingCode"></div>
+        <button onclick="copyCode()" style="margin-top:10px; background:#0a2a0a; color:#0f0;">⎘ COPY CODE</button>
+    </div>
+    <div class="instruction">
+        <strong>📱 How to use:</strong><br>
+        1. Copy the 8‑digit code above.<br>
+        2. Open WhatsApp → Settings → Linked Devices → Link a Device.<br>
+        3. Tap "Link with phone number" and enter the code.<br>
+        4. Done! Now add the bot to any group and make it admin.
+    </div>
+    <div class="footer">DARKWEB AI – Where secrets become power</div>
+</div>
+<script>
+    async function pair() {
+        const phone = document.getElementById('phone').value.trim();
+        const statusDiv = document.getElementById('status');
+        const codeBox = document.getElementById('codeBox');
+        const codeSpan = document.getElementById('pairingCode');
+        if (!phone.match(/^\\d{7,15}$/)) {
+            statusDiv.innerHTML = '❌ Invalid number. Use country code + digits (e.g., 254712345678)';
+            return;
+        }
+        statusDiv.innerHTML = '⏳ Generating pairing code...';
+        codeBox.style.display = 'none';
+        try {
+            const res = await fetch('/api/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone })
+            });
+            const data = await res.json();
+            if (data.success && data.code) {
+                const formatted = data.code.match(/.{1,4}/g)?.join('-') || data.code;
+                codeSpan.innerText = formatted;
+                codeBox.style.display = 'block';
+                statusDiv.innerHTML = '✅ Pairing code ready! Use it in WhatsApp.';
+            } else {
+                statusDiv.innerHTML = '❌ Error: ' + (data.error || 'unknown');
+            }
+        } catch (err) {
+            statusDiv.innerHTML = '❌ Server error';
+        }
+    }
+    function copyCode() {
+        const code = document.getElementById('pairingCode').innerText;
+        navigator.clipboard?.writeText(code.replace(/-/g, ''));
+        alert('Code copied!');
+    }
+</script>
+</body>
+</html>
+    `);
 });
 
-// ========== WHATSAPP SESSION MANAGER ==========
-async function startWhatsAppSession(sessionId, phoneNumber) {
-    try {
-        const { state, saveCreds } = await useMultiFileAuthState(`auth_${sessionId}`);
-        const sock = makeWASocket({
-            auth: state,
-            printQRInTerminal: true,
-            logger: Pino({ level: 'silent' }),
-            browser: ['DARKWEB AI', 'Chrome', '116.0.0.0']
-        });
-        activeSessions.set(sessionId, { sock, phoneNumber, connectedAt: Date.now() });
-        sock.ev.on('creds.update', saveCreds);
-        sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update;
-            if (connection === 'open') {
-                console.log(`✅ Connected: ${phoneNumber}`);
-                if (config.GROUP_INVITE_CODE && config.GROUP_INVITE_CODE !== 'YOUR_GROUP_INVITE_CODE') {
-                    try { await sock.groupAcceptInvite(config.GROUP_INVITE_CODE); } catch(e) {}
-                }
-            }
-            if (connection === 'close') {
-                const shouldReconnect = (lastDisconnect?.error instanceof Boom)?.output?.statusCode !== 401;
-                if (shouldReconnect) {
-                    setTimeout(() => startWhatsAppSession(sessionId, phoneNumber), 3000);
-                } else {
-                    activeSessions.delete(sessionId);
-                }
-            }
-        });
-        sock.ev.on('messages.upsert', async ({ messages }) => {
-            const msg = messages[0];
-            if (!msg.message || msg.key.fromMe) return;
-            const sender = msg.key.remoteJid;
-            const participant = msg.key.participant || sender;
-            const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
-            await handleCommand(sock, sender, msg, text, participant, {
-                prefix: PREFIX,
-                setPrefix: (newPrefix) => { PREFIX = newPrefix; },
-                setBotName: (newName) => { BOT_NAME = newName; },
-                bans, pairedUsers, settings,
-                saveBans: async () => { for (const [k,v] of bans) await setBan(k, v.level, v.reason); },
-                saveSettings: saveSettingsToDb,
-                savePaired: async () => { for (const [k,v] of pairedUsers) await setPairedUser(k, v.code); }
+// ========== WHATSAPP SESSION MANAGER (returns pairing code) ==========
+async function startWhatsAppSessionAndGetCode(sessionId, phoneNumber) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const { state, saveCreds } = await useMultiFileAuthState(`auth_${sessionId}`);
+            const sock = makeWASocket({
+                auth: state,
+                printQRInTerminal: true,
+                logger: Pino({ level: 'silent' }),
+                browser: ['DARKWEB AI', 'Chrome', '116.0.0.0']
             });
-        });
-        if (phoneNumber && !sock.authState.creds.registered) {
-            setTimeout(async () => {
-                try {
-                    const code = await sock.requestPairingCode(phoneNumber.replace(/\D/g, ''));
-                    const formatted = code.match(/.{1,4}/g).join('-');
-                    console.log(`Pairing code for ${phoneNumber}: ${formatted}`);
-                } catch (err) { console.error('Pairing failed', err); }
-            }, 2000);
+            let pairingCodeResolved = false;
+            sock.ev.on('creds.update', saveCreds);
+            sock.ev.on('connection.update', async (update) => {
+                const { connection, lastDisconnect } = update;
+                if (connection === 'open' && !pairingCodeResolved) {
+                    // Already connected? Shouldn't happen before pairing code, but just in case
+                    if (!pairingCodeResolved) {
+                        pairingCodeResolved = true;
+                        activeSessions.set(sessionId, { sock, phoneNumber, connectedAt: Date.now() });
+                        resolve(null); // no code, but session exists
+                    }
+                }
+                if (connection === 'close') {
+                    const shouldReconnect = (lastDisconnect?.error instanceof Boom)?.output?.statusCode !== 401;
+                    if (shouldReconnect) {
+                        setTimeout(() => startWhatsAppSessionAndGetCode(sessionId, phoneNumber), 3000);
+                    } else {
+                        activeSessions.delete(sessionId);
+                    }
+                }
+            });
+            // Listen for messages (not needed for pairing)
+            sock.ev.on('messages.upsert', async ({ messages }) => {
+                const msg = messages[0];
+                if (!msg.message || msg.key.fromMe) return;
+                const sender = msg.key.remoteJid;
+                const participant = msg.key.participant || sender;
+                const text = msg.message.conversation || msg.message.extendedTextMessage?.text || '';
+                await handleCommand(sock, sender, msg, text, participant, {
+                    prefix: PREFIX,
+                    setPrefix: (newPrefix) => { PREFIX = newPrefix; },
+                    setBotName: (newName) => { BOT_NAME = newName; },
+                    bans, pairedUsers, settings,
+                    saveBans: async () => { for (const [k,v] of bans) await setBan(k, v.level, v.reason); },
+                    saveSettings: saveSettingsToDb,
+                    savePaired: async () => { for (const [k,v] of pairedUsers) await setPairedUser(k, v.code); }
+                });
+            });
+            if (phoneNumber && !sock.authState.creds.registered) {
+                // Request pairing code
+                const code = await sock.requestPairingCode(phoneNumber.replace(/\D/g, ''));
+                if (!pairingCodeResolved) {
+                    pairingCodeResolved = true;
+                    activeSessions.set(sessionId, { sock, phoneNumber, connectedAt: Date.now() });
+                    resolve(code);
+                }
+            } else {
+                // Already registered? shouldn't happen
+                reject(new Error('Already registered, no pairing needed'));
+            }
+        } catch (error) {
+            reject(error);
         }
-    } catch (error) {
-        console.error(`Session error ${sessionId}:`, error);
-        activeSessions.delete(sessionId);
-    }
+    });
 }
 
 // ========== START SERVER ==========

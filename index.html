@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>DARKWEB AI – HACKER TERMINAL</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --bg-deep: #030705;
+      --panel-bg: rgba(0, 15, 5, 0.85);
+      --neon-green: #0f0;
+      --neon-cyan: #0ff;
+      --neon-dim: #0a4a2a;
+      --text-primary: #b3ffcf;
+      --text-dim: #5f9e6e;
+      --danger: #ff3366;
+      --radius: 12px;
+    }
+    body {
+      background: var(--bg-deep);
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0, 255, 0, 0.03) 0px, rgba(0, 255, 0, 0.03) 2px, transparent 2px, transparent 8px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .wrap {
+      position: relative;
+      z-index: 3;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    header {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--neon-dim);
+      border-radius: var(--radius);
+      padding: 1rem 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-weight: 800;
+      font-size: 1.3rem;
+    }
+    .logo-icon {
+      background: var(--neon-green);
+      color: #000;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      box-shadow: 0 0 8px #0f0;
+    }
+    .logo span { color: var(--neon-green); text-shadow: 0 0 4px #0f0; }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,255,0,0.1);
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      border: 1px solid var(--neon-dim);
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px #0f0;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    .card, .stat-card, .hero {
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--neon-dim);
+      border-radius: var(--radius);
+      margin-bottom: 1.5rem;
+    }
+    .card-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--neon-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+    }
+    .card-header-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--neon-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 6px #0ff;
+    }
+    .card-body { padding: 1.5rem; }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card { padding: 1.2rem; text-align: center; }
+    .stat-label { font-size: 0.65rem; color: var(--text-dim); letter-spacing: 1.5px; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--neon-green); text-shadow: 0 0 4px #0f0; }
+    .stat-sub { font-size: 0.7rem; color: var(--text-dim); }
+    .hero { text-align: center; padding: 2rem; }
+    .hero h1 { font-size: 2rem; margin: 0.5rem 0; }
+    .hero h1 em { color: #0f0; font-style: normal; text-shadow: 0 0 8px #0f0; }
+    input, button { font-family: 'JetBrains Mono', monospace; }
+    input {
+      width: 100%;
+      background: #021007;
+      border: 1.5px solid var(--neon-dim);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      color: #0f0;
+      font-size: 1rem;
+      outline: none;
+    }
+    input:focus { border-color: #0f0; box-shadow: 0 0 0 3px rgba(0,255,0,0.2); }
+    .btn {
+      width: 100%;
+      padding: 0.9rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: 0.2s;
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0f0, #0a6e2f);
+      color: #000;
+      box-shadow: 0 0 8px rgba(0,255,0,0.5);
+    }
+    .btn-primary:hover { transform: scale(0.98); filter: brightness(1.1); }
+    .code-box {
+      background: #010a05;
+      border: 1px solid #0f0;
+      border-radius: 16px;
+      padding: 1.2rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .code-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      color: #0f0;
+      text-shadow: 0 0 6px #0f0;
+    }
+    .session-item {
+      background: #031007;
+      border: 1px solid var(--neon-dim);
+      border-radius: 16px;
+      padding: 0.9rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+    }
+    .btn-danger {
+      background: rgba(255,51,102,0.15);
+      border: 1px solid #ff3366;
+      color: #ff6680;
+      width: auto;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #021007;
+      border: 1px solid #0f0;
+      color: #0f0;
+      padding: 0.5rem 1.2rem;
+      border-radius: 40px;
+      font-family: monospace;
+      transition: transform 0.2s;
+      z-index: 999;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    footer { text-align: center; padding: 2rem; font-size: 0.65rem; color: var(--text-dim); border-top: 1px solid var(--neon-dim); margin-top: 2rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><div class="logo-icon">◤</div> DARKWEB<span> AI</span></div>
+    <div class="status-pill"><div class="status-dot"></div> WEB TERMINAL • ACTIVE</div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-label">>_ SESSIONS</div><div class="stat-value" id="statSessions">—</div><div class="stat-sub" id="statSlots">— slots free</div></div>
+    <div class="stat-card"><div class="stat-label">>_ UPTIME</div><div class="stat-value" id="statUptime">—</div><div class="stat-sub">server runtime</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-label">>> DARKWEB AI WEB VERSION</div>
+    <h1>Pair <em>WhatsApp</em><br>with DarkWeb AI</h1>
+    <p style="color: var(--text-dim);">Code‑based pairing • Auto‑join underground • Encrypted sessions</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-header-dot"></div> $ new_connection --pair</div>
+    <div class="card-body">
+      <input type="tel" id="phoneInput" placeholder="254712345678" maxlength="20" inputmode="numeric" />
+      <button class="btn btn-primary" id="connectBtn" onclick="requestPair()">⤚ GENERATE PAIRING CODE ⤛</button>
+      <div id="codeDisplay" style="display:none;" class="code-box">
+        <div class="code-label" style="font-size:0.7rem;">[ PAIRING TOKEN ]</div>
+        <div class="code-value" id="codeVal">— — — —</div>
+        <button class="btn btn-copy" onclick="copyCode()" style="margin-top:8px; background:rgba(0,255,0,0.1); border:1px solid #0f0; padding:0.3rem 1rem; border-radius:40px;">⎘ COPY CODE</button>
+        <div style="font-size:0.65rem; margin-top:8px;">WhatsApp → Linked Devices → Link with phone number</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-header-dot"></div> # active_sessions</div>
+    <div class="card-body" id="sessionListContainer"><div id="sessionList">⏳ loading sessions...</div></div>
+  </div>
+
+  <footer>DARKWEB AI – HACKER EDITION • Where secrets become power</footer>
+</div>
+<div id="toast" class="toast">✓ DONE</div>
+
+<script>
+  async function fetchJSON(url, options={}) {
+    const res = await fetch(url, options);
+    return res.json();
+  }
+  async function loadStatus() {
+    try {
+      const data = await fetchJSON('/api/status');
+      document.getElementById('statSessions').innerHTML = data.sessions + ` <span style="font-size:1rem;">/ ${data.maxSessions}</span>`;
+      document.getElementById('statSlots').innerHTML = (data.maxSessions - data.sessions) + ' slots free';
+      document.getElementById('statUptime').innerHTML = formatUptime(data.uptime);
+    } catch(e) { console.warn(e); }
+  }
+  function formatUptime(secs) {
+    const d = Math.floor(secs/86400), h = Math.floor((secs%86400)/3600), m = Math.floor((secs%3600)/60);
+    if(d) return d+'d '+h+'h';
+    if(h) return h+'h '+m+'m';
+    if(m) return m+'m';
+    return secs+'s';
+  }
+  async function loadSessions() {
+    try {
+      const data = await fetchJSON('/api/sessions');
+      const list = data.sessions || [];
+      if(!list.length) { document.getElementById('sessionList').innerHTML = '<div class="session-item">🔌 No active sessions</div>'; return; }
+      let html = '';
+      for(let s of list) {
+        html += `<div class="session-item"><div><strong>${s.phoneNumber}</strong><br><span style="font-size:0.65rem;">${s.status === 'connected' ? '✅ connected' : '⟳ reconnecting'}</span></div><button class="btn-danger" onclick="deleteSession('${s.phoneNumber}')">delete</button></div>`;
+      }
+      document.getElementById('sessionList').innerHTML = html;
+    } catch(e) { document.getElementById('sessionList').innerHTML = '<div class="session-item">⚠️ Failed to load</div>'; }
+  }
+  async function requestPair() {
+    const phone = document.getElementById('phoneInput').value.trim().replace(/\s/g,'');
+    const btn = document.getElementById('connectBtn');
+    if(!phone || !/^\d{7,15}$/.test(phone)) { showToast('Invalid number'); return; }
+    btn.disabled = true; btn.innerHTML = '⏳ GENERATING...';
+    try {
+      const res = await fetch('/api/connect', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone }) });
+      const data = await res.json();
+      if(data.success) {
+        // Poll for pairing code? Simpler: backend will log but we need to show. For demo we show a mock – but real implementation would require WebSocket.
+        // Since we don't have WebSocket, we'll tell user to check console or we'll simulate. For actual production, you'd use socket.io.
+        showToast('Pairing started! Check WhatsApp for code (if paired via number) or scan QR from bot logs.');
+        document.getElementById('codeDisplay').style.display = 'none';
+      } else { showToast('Error: '+data.error); }
+    } catch(e) { showToast('Server error'); }
+    btn.disabled = false; btn.innerHTML = '⤚ GENERATE PAIRING CODE ⤛';
+    loadSessions(); loadStatus();
+  }
+  async function deleteSession(phone) {
+    const pwd = prompt('Enter admin password to delete session:');
+    if(!pwd) return;
+    try {
+      const res = await fetch('/api/delsession', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ phone, password: pwd }) });
+      const data = await res.json();
+      if(data.ok) showToast('Session deleted'); else showToast('Failed: '+data.error);
+      loadSessions(); loadStatus();
+    } catch(e) { showToast('Error'); }
+  }
+  function copyCode() { const code = document.getElementById('codeVal').innerText; if(code && code !== '— — — —') navigator.clipboard?.writeText(code).then(()=>showToast('Copied')); }
+  function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500); }
+  setInterval(() => { loadStatus(); loadSessions(); }, 15000);
+  loadStatus(); loadSessions();
+</script>
+</body>
+</html>
